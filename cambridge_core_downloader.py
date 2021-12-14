@@ -1,4 +1,7 @@
+from io import BytesIO
 from pathlib import Path
+
+import PyPDF3
 import requests
 from bs4 import BeautifulSoup
 
@@ -11,6 +14,7 @@ class CambridgeCoreBook:
     html = ''
     base_url = 'https://www.cambridge.org'
     output_dir = ''
+    chapter_dir = ''
 
     def __init__(self, doi):
         self.doi = doi
@@ -21,6 +25,7 @@ class CambridgeCoreBook:
         self.get_chapters()
         print(f'Downloading "{self.title}" by {self.author}.')
         self.download_pdfs()
+        self.merge_pdfs()
 
     def get_html(self):
         doi_url = 'https://doi.org/' + self.doi
@@ -49,14 +54,17 @@ class CambridgeCoreBook:
 
     def make_output_dir(self):
         try:
-            self.output_dir = self.author + ' - ' + self.title
+            self.output_dir = self.author + ' - ' + self.title + '/'
+            self.chapter_dir = self.output_dir + 'chapters/'
             Path(self.output_dir).mkdir(exist_ok=True)
+            Path(self.chapter_dir).mkdir(exist_ok=True)
         except FileExistsError:
             print(f'The output folder "{self.output_dir}" already exists! Please rename or remove and start again.')
             raise
 
     def download_pdfs(self):
         sequence_number = 1
+        pdf_response = ''
         for chapter in self.chapters:
             try:
                 pdf_response = requests.get(self.base_url + chapter['pdf_link'])
@@ -64,11 +72,20 @@ class CambridgeCoreBook:
                 raise
             chapter['pdf'] = pdf_response.content
             with open(
-                    self.output_dir + '/' +
+                    self.chapter_dir +
                     f'{sequence_number:02}_{chapter["title"].replace(" ", "-")}_{chapter["pages"]}.pdf',
                     'wb') as output_file:
                 output_file.write(chapter['pdf'])
             sequence_number += 1
+
+    def merge_pdfs(self):
+        merger = PyPDF3.PdfFileMerger()
+        for chapter in self.chapters:
+            pdf = BytesIO(chapter['pdf'])
+            bookmark = chapter['title']
+            merger.append(pdf, bookmark)
+        merger.write(self.output_dir + '/' + f'{self.author.replace(" ", "-")}_{self.title.replace(" ", "-")}.pdf')
+        merger.close()
 
 
 if __name__ == '__main__':
