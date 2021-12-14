@@ -1,9 +1,12 @@
+import re
+from argparse import ArgumentParser
 from io import BytesIO
 from pathlib import Path
 
 import PyPDF3
 import requests
 from bs4 import BeautifulSoup
+from tqdm import tqdm
 
 
 class CambridgeCoreBook:
@@ -23,11 +26,11 @@ class CambridgeCoreBook:
         self.get_author()
         self.make_output_dir()
         self.get_chapters()
-        print(f'Downloading "{self.title}" by {self.author}.')
         self.download_pdfs()
         self.merge_pdfs()
 
     def get_html(self):
+        print(f'Getting book information from DOI.')
         doi_url = 'https://doi.org/' + self.doi
         response = ''
         try:
@@ -39,15 +42,24 @@ class CambridgeCoreBook:
     def get_chapters(self):
         all_chapters_html = self.html.find_all('ul', class_='details')
         for single_chapter_html in all_chapters_html:
-            chapter_dict = {'title': (single_chapter_html.find_all('li')[0].get_text().strip().split('\n'))[0],
-                            'pages': (single_chapter_html.find_all('li')[0].get_text().strip().split('\n'))[1].replace(
-                                'pp ', ''),
-                            'pdf_link': single_chapter_html.find_all('li')[5].a['href'],
-                            'html_link': single_chapter_html.find_all('li')[6].a['href']}
+            chapter_dict = {
+                'title': (single_chapter_html.find('a', class_='part-link').get_text().strip().split('\n'))[0],
+                'pdf_link': single_chapter_html.find(href=re.compile('\.pdf'))['href'],
+                'pages': '',
+                'html_link': ''}
+            if len(single_chapter_html.find('a', class_='part-link').get_text().strip().split('\n')) == 2:
+                chapter_dict['pages'] = \
+                    (single_chapter_html.find('a', class_='part-link').get_text().strip().split('\n'))[1].replace(
+                        'pp ', '')
+            if single_chapter_html.find(href=re.compile('core-reader')) is not None:
+                chapter_dict['html_link'] = single_chapter_html.find(href=re.compile('core-reader'))['href']
             self.chapters.append(chapter_dict)
 
     def get_author(self):
-        self.author = self.html.find('meta', {'name': 'citation_author'})['content']
+        if not self.html.find('meta', {'name': 'citation_author'}):
+            self.author = self.html.find('meta', {'name': 'citation_editor'})['content']
+        else:
+            self.author = self.html.find('meta', {'name': 'citation_author'})['content']
 
     def get_title(self):
         self.title = self.html.find('meta', {'name': 'citation_title'})['content']
@@ -63,9 +75,10 @@ class CambridgeCoreBook:
             raise
 
     def download_pdfs(self):
+        print(f'Downloading "{self.title}" by {self.author}.')
         sequence_number = 1
         pdf_response = ''
-        for chapter in self.chapters:
+        for chapter in tqdm(self.chapters):
             try:
                 pdf_response = requests.get(self.base_url + chapter['pdf_link'])
             except not pdf_response.status_code == 200:
@@ -79,6 +92,7 @@ class CambridgeCoreBook:
             sequence_number += 1
 
     def merge_pdfs(self):
+        print(f'Merging PDFs.')
         merger = PyPDF3.PdfFileMerger()
         for chapter in self.chapters:
             pdf = BytesIO(chapter['pdf'])
@@ -86,8 +100,12 @@ class CambridgeCoreBook:
             merger.append(pdf, bookmark)
         merger.write(self.output_dir + '/' + f'{self.author.replace(" ", "-")}_{self.title.replace(" ", "-")}.pdf')
         merger.close()
+        print('Done.')
 
 
 if __name__ == '__main__':
+    parser = ArgumentParser('Download a book from Cambridge Core.')
+    parser.add_argument('doi', type=str, help='Digital Object Identifier (DOI)')
+    args = parser.parse_args()
     print('Welcome to Cambridge Core Book Downloader!')
-    book = CambridgeCoreBook('10.1017/9781108923859')
+    book = CambridgeCoreBook(args.doi)
