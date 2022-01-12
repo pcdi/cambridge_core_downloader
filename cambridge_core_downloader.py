@@ -62,11 +62,11 @@ class CambridgeCoreBook:
             self.author = self.html.find('meta', {'name': 'citation_author'})['content']
 
     def get_title(self):
-        self.title = self.html.find('meta', {'name': 'citation_title'})['content']
+        self.title = self.html.find('meta', {'name': 'citation_title'})['content'].replace(":", "")
 
     def make_output_dir(self):
         try:
-            self.output_dir = self.author + ' - ' + self.title + '/'
+            self.output_dir = f'{self.author.replace(" ", "-")}_{self.title.replace(" ", "-")}/'
             self.chapter_dir = self.output_dir + 'chapters/'
             Path(self.output_dir).mkdir(exist_ok=True)
             Path(self.chapter_dir).mkdir(exist_ok=True)
