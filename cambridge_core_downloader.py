@@ -26,7 +26,7 @@ class CambridgeCoreBook:
         self.get_author()
         self.make_output_dir()
         self.get_chapters()
-        self.download_pdfs()
+        self.download_files()
         self.merge_pdfs()
 
     def get_html(self):
@@ -74,22 +74,26 @@ class CambridgeCoreBook:
             print(f'The output folder "{self.output_dir}" already exists! Please rename or remove and start again.')
             raise
 
-    def download_pdfs(self):
-        print(f'Downloading "{self.title}" by {self.author}.')
-        sequence_number = 1
-        pdf_response = ''
-        for chapter in tqdm(self.chapters):
-            try:
-                pdf_response = requests.get(self.base_url + chapter['pdf_link'])
-            except not pdf_response.status_code == 200:
-                raise
-            chapter['pdf'] = pdf_response.content
-            with open(
-                    self.chapter_dir +
-                    f'{sequence_number:02}_{chapter["title"].replace(" ", "-")}_{chapter["pages"]}.pdf',
-                    'wb') as output_file:
-                output_file.write(chapter['pdf'])
-            sequence_number += 1
+    def download_files(self):
+        for filetype in ['pdf', 'html']:
+            if self.chapters[0][f'{filetype}_link'] == '':
+                continue
+            else:
+                print(f'Downloading {filetype.upper()}s for "{self.title}" by {self.author}.')
+                sequence_number = 1
+                response = ''
+                for chapter in tqdm(self.chapters):
+                    try:
+                        response = requests.get(self.base_url + chapter[f'{filetype}_link'])
+                    except not response.status_code == 200:
+                        raise
+                    chapter[filetype] = response.content
+                    with open(
+                            self.chapter_dir +
+                            f'{sequence_number:02}_{chapter["title"].replace(" ", "-")}_{chapter["pages"]}.{filetype}',
+                            'wb') as output_file:
+                        output_file.write(chapter[filetype])
+                    sequence_number += 1
 
     def merge_pdfs(self):
         print(f'Merging PDFs.')
