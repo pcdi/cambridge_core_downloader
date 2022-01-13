@@ -46,7 +46,8 @@ class CambridgeCoreBook:
                 'title': (single_chapter_html.find('a', class_='part-link').get_text().strip().split('\n'))[0],
                 'pdf_link': single_chapter_html.find(href=re.compile('\.pdf'))['href'],
                 'pages': '',
-                'html_link': ''}
+                'html_link': '',
+                'indentation_level': int([re.split('indent-', classname) for classname in single_chapter_html.parent['class'] if re.match('indent', classname)][0][-1])}
             if len(single_chapter_html.find('a', class_='part-link').get_text().strip().split('\n')) == 2:
                 chapter_dict['pages'] = \
                     (single_chapter_html.find('a', class_='part-link').get_text().strip().split('\n'))[1].replace(
