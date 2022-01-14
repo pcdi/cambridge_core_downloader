@@ -6,6 +6,7 @@ from pathlib import Path
 import PyPDF3
 import requests
 from bs4 import BeautifulSoup
+from ebooklib import epub
 from tqdm import tqdm
 
 
@@ -18,6 +19,7 @@ class CambridgeCoreBook:
     base_url = 'https://www.cambridge.org'
     output_dir = ''
     chapter_dir = ''
+    output_filename = ''
 
     def __init__(self, doi):
         self.doi = doi
@@ -25,9 +27,11 @@ class CambridgeCoreBook:
         self.get_title()
         self.get_author()
         self.make_output_dir()
+        self.output_filename = f'{self.author.replace(" ", "-")}_{self.title.replace(" ", "-")}'
         self.get_chapters()
         self.download_files()
         self.merge_pdfs()
+        self.make_epub()
 
     def get_html(self):
         print(f'Getting book information from DOI.')
@@ -47,7 +51,9 @@ class CambridgeCoreBook:
                 'pdf_link': single_chapter_html.find(href=re.compile('\.pdf'))['href'],
                 'pages': '',
                 'html_link': '',
-                'indentation_level': int([re.split('indent-', classname) for classname in single_chapter_html.parent['class'] if re.match('indent', classname)][0][-1])}
+                'indentation_level': int(
+                    [re.split('indent-', classname) for classname in single_chapter_html.parent['class'] if
+                     re.match('indent', classname)][0][-1])}
             if len(single_chapter_html.find('a', class_='part-link').get_text().strip().split('\n')) == 2:
                 chapter_dict['pages'] = \
                     (single_chapter_html.find('a', class_='part-link').get_text().strip().split('\n'))[1].replace(
@@ -89,6 +95,8 @@ class CambridgeCoreBook:
                     except not response.status_code == 200:
                         raise
                     chapter[filetype] = response.content
+                    if filetype == 'html':
+                        self.extract_html(chapter)
                     with open(
                             self.chapter_dir +
                             f'{sequence_number:02}_{chapter["title"].replace(" ", "-")}_{chapter["pages"]}.{filetype}',
@@ -103,8 +111,35 @@ class CambridgeCoreBook:
             pdf = BytesIO(chapter['pdf'])
             bookmark = chapter['title']
             merger.append(pdf, bookmark)
-        merger.write(self.output_dir + '/' + f'{self.author.replace(" ", "-")}_{self.title.replace(" ", "-")}.pdf')
+        merger.write(self.output_dir + '/' + self.output_filename + '.pdf')
         merger.close()
+        print('Done.')
+
+    def extract_html(self, chapter):
+        chapter_html = BeautifulSoup(chapter['html'], 'html.parser')
+        chapter['extracted_html'] = chapter_html.find(id='content-container').prettify()
+
+    def make_epub(self):
+        print('Making EPUB.')
+        book = epub.EpubBook()
+        book.set_identifier(self.output_filename)
+        book.set_title(self.title)
+        book.set_language('en')
+        book.add_author(self.author)
+        book.toc = []
+        book.spine = []
+
+        for chapter in self.chapters:
+            epub_chapter = epub.EpubHtml(title=chapter['title'],
+                                         file_name=chapter['title'].replace(" ", "-") + '.html',
+                                         lang='en')
+            epub_chapter.set_content(chapter['extracted_html'])
+            book.add_item(epub_chapter)
+            book.toc.append(epub_chapter)
+            book.spine.append(epub_chapter)
+        book.add_item(epub.EpubNcx())
+        book.add_item(epub.EpubNav())
+        epub.write_epub(self.output_dir + '/' + self.output_filename + '.epub', book)
         print('Done.')
 
 
