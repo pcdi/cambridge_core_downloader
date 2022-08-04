@@ -46,6 +46,8 @@ class CambridgeCoreBook:
     def get_chapters(self):
         all_chapters_html = self.html.find_all('ul', class_='details')
         for single_chapter_html in all_chapters_html:
+            if single_chapter_html.find(href=re.compile('\.pdf')) is None:
+                continue
             chapter_dict = {
                 'title': (single_chapter_html.find('a', class_='part-link').get_text().strip().split('\n'))[0],
                 'pdf_link': single_chapter_html.find(href=re.compile('\.pdf'))['href'],
