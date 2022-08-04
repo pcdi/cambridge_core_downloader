@@ -122,6 +122,9 @@ class CambridgeCoreBook:
         chapter['extracted_html'] = chapter_html.find(id='content-container').prettify()
 
     def make_epub(self):
+        if 'extracted_html' not in self.chapters[0]:
+            print('No HTML available, no EPUB can be made.')
+            return
         print('Making EPUB.')
         book = epub.EpubBook()
         book.set_identifier(self.output_filename)
