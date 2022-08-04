@@ -3,7 +3,7 @@ from argparse import ArgumentParser
 from io import BytesIO
 from pathlib import Path
 
-import PyPDF3
+import PyPDF2
 import requests
 from bs4 import BeautifulSoup
 from ebooklib import epub
@@ -108,11 +108,11 @@ class CambridgeCoreBook:
 
     def merge_pdfs(self):
         print(f'Merging PDFs.')
-        merger = PyPDF3.PdfFileMerger()
+        merger = PyPDF2.PdfMerger()
         for chapter in self.chapters:
             pdf = BytesIO(chapter['pdf'])
             bookmark = chapter['title']
-            merger.append(pdf, bookmark)
+            merger.append(fileobj=pdf, outline_item=bookmark)
         merger.write(self.output_dir + '/' + self.output_filename + '.pdf')
         merger.close()
         print('Done.')
