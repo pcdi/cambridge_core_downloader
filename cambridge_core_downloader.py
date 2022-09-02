@@ -17,9 +17,11 @@ class CambridgeCoreBook:
     title = ''
     author = ''
     chapters = []
-    directory_pages = 0
+    total_directory_pages = 0
+    current_directory_page = 0
     html = ''
     base_url = 'https://www.cambridge.org'
+    book_url = ''
     output_dir = ''
     chapter_dir = ''
     output_filename = ''
@@ -48,10 +50,12 @@ class CambridgeCoreBook:
             raise
         self.html = BeautifulSoup(response.text, 'html.parser')
         if self.html.find(attrs={"data-test-id": "paginationSearchResult"}) is None:
-            self.directory_pages = 1
+            self.total_directory_pages = 1
         else:
-            self.directory_pages = int(
+            self.total_directory_pages = int(
                 self.html.find(attrs={"data-test-id": "paginationSearchResult"}).find('p').get_text().split()[-1])
+        self.current_directory_page = 1
+        self.book_url = response.url
 
     def get_chapters(self):
         all_chapters_html = self.html.find_all('ul', class_='details')
@@ -84,6 +88,16 @@ class CambridgeCoreBook:
             if single_chapter_html.find(href=re.compile('core-reader')) is not None:
                 chapter_dict['html_link'] = single_chapter_html.find(href=re.compile('core-reader'))['href']
             self.chapters.append(chapter_dict)
+        if self.current_directory_page < self.total_directory_pages:
+            response = ''
+            next_page_url = self.book_url + f'?pageNum={self.current_directory_page + 1}'
+            try:
+                response = requests.get(next_page_url)
+            except not response.status_code == 200:
+                raise
+            self.html = BeautifulSoup(response.text, 'html.parser')
+            self.current_directory_page = self.current_directory_page + 1
+            self.get_chapters()
 
     def get_author(self):
         if not self.html.find('meta', {'name': 'citation_author'}):
