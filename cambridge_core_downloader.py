@@ -6,10 +6,10 @@ from pathlib import Path
 
 import PyPDF2
 import requests
+import roman
 from bs4 import BeautifulSoup
 from ebooklib import epub
 from tqdm import tqdm
-import roman
 
 
 class CambridgeCoreBook:
@@ -23,6 +23,8 @@ class CambridgeCoreBook:
     output_dir = ''
     chapter_dir = ''
     output_filename = ''
+    nums_array = PyPDF2.generic.ArrayObject()
+    page_index = 0
 
     def __init__(self, doi):
         self.doi = doi
@@ -48,7 +50,8 @@ class CambridgeCoreBook:
         if self.html.find(attrs={"data-test-id": "paginationSearchResult"}) is None:
             self.directory_pages = 1
         else:
-            self.directory_pages = int(self.html.find(attrs={"data-test-id": "paginationSearchResult"}).find('p').get_text().split()[-1])
+            self.directory_pages = int(
+                self.html.find(attrs={"data-test-id": "paginationSearchResult"}).find('p').get_text().split()[-1])
 
     def get_chapters(self):
         all_chapters_html = self.html.find_all('ul', class_='details')
@@ -77,6 +80,7 @@ class CambridgeCoreBook:
                     chapter_dict['first_page'] = roman.fromRoman(chapter_dict['first_page'].upper())
                     chapter_dict['last_page'] = roman.fromRoman(chapter_dict['last_page'].upper())
                     chapter_dict['pagination_type'] = 'roman'
+                chapter_dict['pages_length'] = chapter_dict['last_page'] - chapter_dict['first_page'] + 1
             if single_chapter_html.find(href=re.compile('core-reader')) is not None:
                 chapter_dict['html_link'] = single_chapter_html.find(href=re.compile('core-reader'))['href']
             self.chapters.append(chapter_dict)
@@ -127,13 +131,39 @@ class CambridgeCoreBook:
                         output_file.write(chapter[filetype])
                     sequence_number += 1
 
+    def make_page_label_dict_entry_from_chapter(self, chapter):
+        # See https://stackoverflow.com/q/61794994 and https://stackoverflow.com/q/61740267
+        #
+        # PDF 32000-1:2008, page 374--375, 12.4.2 Page Labels
+        # page index of the first page in a labelling range
+        self.nums_array.append(PyPDF2.generic.NumberObject(self.page_index))
+        # page label dictionary defining the labelling characteristics for the pages in that range
+        number_type = PyPDF2.generic.DictionaryObject()
+        if chapter['pagination_type'] == 'arabic':
+            number_type.update(
+                {PyPDF2.generic.NameObject("/S"): PyPDF2.generic.NameObject(f"/D /St {chapter['first_page']}")})
+        elif chapter['pagination_type'] == 'roman':
+            number_type.update(
+                {PyPDF2.generic.NameObject("/S"): PyPDF2.generic.NameObject(f"/r /St {chapter['first_page']}")})
+        # /Nums Array containing the /PageLabels Number Tree (see 7.9.7)
+        self.nums_array.append(number_type)
+
     def merge_pdfs(self):
         print(f'Merging PDFs.')
         merger = PyPDF2.PdfMerger()
         for chapter in self.chapters:
             pdf = BytesIO(chapter['pdf'])
             bookmark = chapter['title']
+            chapter['pdf_length'] = len(PyPDF2.PdfReader(pdf).pages)
+            self.make_page_label_dict_entry_from_chapter(chapter)
+            # Unfortunately, length in pages is not necessarily the same as length of the PDF file, as Cambridge Core sometimes inserts blank or copyright pages
+            self.page_index = self.page_index + chapter['pdf_length']
             merger.append(fileobj=pdf, outline_item=bookmark)
+        page_numbers = PyPDF2.generic.DictionaryObject()
+        page_numbers.update({PyPDF2.generic.NameObject("/Nums"): self.nums_array})
+        page_labels = PyPDF2.generic.DictionaryObject()
+        page_labels.update({PyPDF2.generic.NameObject('/PageLabels'): page_numbers})
+        merger.output._root_object.update(page_labels)
         merger.write(self.output_dir + '/' + self.output_filename + '.pdf')
         merger.close()
         print('Done.')
