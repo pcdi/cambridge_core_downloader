@@ -1,4 +1,5 @@
 import re
+import string
 from argparse import ArgumentParser
 from io import BytesIO
 from pathlib import Path
@@ -104,9 +105,13 @@ class CambridgeCoreBook:
                     chapter[filetype] = response.content
                     if filetype == 'html':
                         self.extract_html(chapter)
+                    # Ensure only valid characters
+                    valid_characters = f'-_.() {string.ascii_letters}{string.digits}'
+                    chapter_title_for_filename = chapter["title"].replace(" ", "-")
+                    valid_chapter_filename = "".join(ch for ch in chapter_title_for_filename if ch in valid_characters)
                     with open(
                             self.chapter_dir +
-                            f'{sequence_number:02}_{chapter["title"].replace(" ", "-").replace("?", "").encode("ascii", "ignore").decode("ascii")}_{chapter["pages"]}.{filetype}',
+                            f'{sequence_number:02}_{valid_chapter_filename}_{chapter["pages"]}.{filetype}',
                             'wb') as output_file:
                         output_file.write(chapter[filetype])
                     sequence_number += 1
