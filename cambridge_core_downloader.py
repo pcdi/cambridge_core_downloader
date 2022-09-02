@@ -101,7 +101,7 @@ class CambridgeCoreBook:
                         self.extract_html(chapter)
                     with open(
                             self.chapter_dir +
-                            f'{sequence_number:02}_{chapter["title"].replace(" ", "-")}_{chapter["pages"]}.{filetype}',
+                            f'{sequence_number:02}_{chapter["title"].replace(" ", "-").replace("?", "").encode("ascii", "ignore").decode("ascii")}_{chapter["pages"]}.{filetype}',
                             'wb') as output_file:
                         output_file.write(chapter[filetype])
                     sequence_number += 1
