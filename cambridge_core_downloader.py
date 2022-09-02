@@ -112,8 +112,8 @@ class CambridgeCoreBook:
         try:
             self.output_dir = f'{self.author.replace(" ", "-")}_{self.title.replace(" ", "-")}/'
             self.chapter_dir = self.output_dir + 'chapters/'
-            Path(self.output_dir).mkdir(exist_ok=True)
-            Path(self.chapter_dir).mkdir(exist_ok=True)
+            Path(self.output_dir).mkdir(exist_ok=False)
+            Path(self.chapter_dir).mkdir(exist_ok=False)
         except FileExistsError:
             print(f'The output folder "{self.output_dir}" already exists! Please rename or remove and start again.')
             raise
