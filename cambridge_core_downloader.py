@@ -15,6 +15,7 @@ class CambridgeCoreBook:
     title = ''
     author = ''
     chapters = []
+    directory_pages = 0
     html = ''
     base_url = 'https://www.cambridge.org'
     output_dir = ''
@@ -42,6 +43,10 @@ class CambridgeCoreBook:
         except not response.status_code == 200:
             raise
         self.html = BeautifulSoup(response.text, 'html.parser')
+        if self.html.find(attrs={"data-test-id": "paginationSearchResult"}) is None:
+            self.directory_pages = 1
+        else:
+            self.directory_pages = int(self.html.find(attrs={"data-test-id": "paginationSearchResult"}).find('p').get_text().split()[-1])
 
     def get_chapters(self):
         all_chapters_html = self.html.find_all('ul', class_='details')
