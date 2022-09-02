@@ -10,6 +10,7 @@ pypdf3 = "*"
 pypub = "*"
 ebooklib = "*"
 pypdf2 = "*"
+roman = "*"
 
 [dev-packages]
 

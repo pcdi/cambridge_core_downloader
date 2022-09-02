@@ -9,6 +9,7 @@ import requests
 from bs4 import BeautifulSoup
 from ebooklib import epub
 from tqdm import tqdm
+import roman
 
 
 class CambridgeCoreBook:
@@ -66,6 +67,16 @@ class CambridgeCoreBook:
                 chapter_dict['pages'] = \
                     (single_chapter_html.find('a', class_='part-link').get_text().strip().split('\n'))[1].replace(
                         'pp ', '')
+                chapter_dict['first_page'] = chapter_dict['pages'].split('-')[0]
+                chapter_dict['last_page'] = chapter_dict['pages'].split('-')[1]
+                try:
+                    chapter_dict['first_page'] = int(chapter_dict['first_page'])
+                    chapter_dict['last_page'] = int(chapter_dict['last_page'])
+                    chapter_dict['pagination_type'] = 'arabic'
+                except (TypeError, ValueError):
+                    chapter_dict['first_page'] = roman.fromRoman(chapter_dict['first_page'].upper())
+                    chapter_dict['last_page'] = roman.fromRoman(chapter_dict['last_page'].upper())
+                    chapter_dict['pagination_type'] = 'roman'
             if single_chapter_html.find(href=re.compile('core-reader')) is not None:
                 chapter_dict['html_link'] = single_chapter_html.find(href=re.compile('core-reader'))['href']
             self.chapters.append(chapter_dict)
