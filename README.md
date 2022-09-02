@@ -4,6 +4,7 @@
 - Merge chapters into one book PDF
 - Bookmark the chapters in the PDF (PDF outline)
 - Set the correct pagination: Roman/Arabic ([PDF `/PageLabels`](https://www.w3.org/TR/2014/NOTE-WCAG20-TECHS-20140408/PDF17#PDF17-ex2))
+  - NB: Correct pagination is only possible to a certain extent: Sometimes, the Cambridge Core PDFs have pages added or missing, so they do not conform to the theoretical page range they could contain. This cannot be fixed automatically, as it occurs unsystematically and varies from book to book. As this chiefly applies to prefatory materials, most page numbers inside the chapters are correct, however.
 - Where available, download book chapter HTMLs and create an EPUB version (experimental)
 
 ## How To Use
