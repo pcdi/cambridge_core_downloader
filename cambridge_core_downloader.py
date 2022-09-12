@@ -22,6 +22,7 @@ class CambridgeCoreBook:
     html = ''
     base_url = 'https://www.cambridge.org'
     book_url = ''
+    output_dir_base = 'output/'
     output_dir = ''
     chapter_dir = ''
     output_filename = ''
@@ -110,8 +111,9 @@ class CambridgeCoreBook:
 
     def make_output_dir(self):
         try:
-            self.output_dir = f'{self.author.replace(" ", "-")}_{self.title.replace(" ", "-")}/'
+            self.output_dir = self.output_dir_base + f'{self.author.replace(" ", "-")}_{self.title.replace(" ", "-")}/'
             self.chapter_dir = self.output_dir + 'chapters/'
+            Path(self.output_dir_base).mkdir(exist_ok=True)
             Path(self.output_dir).mkdir(exist_ok=False)
             Path(self.chapter_dir).mkdir(exist_ok=False)
         except FileExistsError:
