@@ -219,7 +219,9 @@ class CambridgeCoreBook:
 
 if __name__ == '__main__':
     parser = ArgumentParser('Download a book from Cambridge Core.')
-    parser.add_argument('doi', type=str, help='Digital Object Identifier (DOI)')
+    parser.add_argument('doi', type=str, help='Digital Object Identifier (DOI)', nargs='?')
     args = parser.parse_args()
     print('Welcome to Cambridge Core Book Downloader!')
+    if not args.doi:
+        args.doi = input('Enter Digital Object Identifier (DOI): ')
     book = CambridgeCoreBook(args.doi)
