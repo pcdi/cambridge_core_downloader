@@ -12,15 +12,13 @@ from ebooklib import epub
 from tqdm import tqdm
 
 
-class CambridgeCoreBook:
+class OxfordBook:
     doi = ''
     title = ''
     author = ''
     chapters = []
-    total_directory_pages = 0
-    current_directory_page = 0
     html = ''
-    base_url = 'https://www.cambridge.org'
+    base_url = 'https://academic.oup.com/'
     book_url = ''
     output_dir_base = 'output/'
     output_dir = ''
@@ -28,6 +26,7 @@ class CambridgeCoreBook:
     output_filename = ''
     nums_array = PyPDF2.generic.ArrayObject()
     page_index = 0
+    headers = {'user-agent': 'oxford_book_downloader/0.0.1'}
 
     def __init__(self, doi):
         self.doi = doi
@@ -36,6 +35,8 @@ class CambridgeCoreBook:
         self.get_author()
         self.make_output_dir()
         self.output_filename = f'{self.author.replace(" ", "-")}_{self.title.replace(" ", "-")}'
+        self.get_chapter_links()
+        self.get_single_chapter()
         self.get_chapters()
         self.download_files()
         self.merge_pdfs()
@@ -46,20 +47,36 @@ class CambridgeCoreBook:
         doi_url = 'https://doi.org/' + self.doi
         response = ''
         try:
-            response = requests.get(doi_url)
+            response = requests.get(doi_url, headers=self.headers)
         except not response.status_code == 200:
             raise
         self.html = BeautifulSoup(response.text, 'html.parser')
-        if self.html.find(attrs={"data-test-id": "paginationSearchResult"}) is None:
-            self.total_directory_pages = 1
-        else:
-            self.total_directory_pages = int(
-                self.html.find(attrs={"data-test-id": "paginationSearchResult"}).find('p').get_text().split()[-1])
-        self.current_directory_page = 1
         self.book_url = response.url
 
+    def get_chapter_links(self):
+        all_chapters_html = self.html.find_all('a', class_='tocLink')
+        for single_chapter_html in all_chapters_html:
+            chapter_dict = {
+                'title': single_chapter_html.find('span', class_='tocLink-title').get_text(),
+                'html_link': single_chapter_html['href']
+            }
+            if single_chapter_html.find('span', class_='tocLink-label') is not None:
+                chapter_dict['number'] = single_chapter_html.find('span', class_='tocLink-label').get_text()
+            self.chapters.append(chapter_dict)
+
+    def get_single_chapter(self):
+        for chapter in self.chapters:
+            response = ''
+            try:
+                response = requests.get(chapter['html_link'], headers=self.headers)
+            except not response.status_code == 200:
+                raise
+            chapter_page_html = BeautifulSoup(response.text, 'html.parser')
+            chapter['pdf_link'] = chapter_page_html.find('meta', {'name': 'citation_pdf_url'})['content']
+            chapter['pages'] = chapter_page_html.find(class_='chapter-pagerange-value').get_text()
+
     def get_chapters(self):
-        all_chapters_html = self.html.find_all('ul', class_='details')
+        all_chapters_html = self.html.find_all('a', class_='tocLink')
         for single_chapter_html in all_chapters_html:
             if single_chapter_html.find(href=re.compile('\.pdf')) is None:
                 continue
@@ -89,16 +106,6 @@ class CambridgeCoreBook:
             if single_chapter_html.find(href=re.compile('core-reader')) is not None:
                 chapter_dict['html_link'] = single_chapter_html.find(href=re.compile('core-reader'))['href']
             self.chapters.append(chapter_dict)
-        if self.current_directory_page < self.total_directory_pages:
-            response = ''
-            next_page_url = self.book_url + f'?pageNum={self.current_directory_page + 1}'
-            try:
-                response = requests.get(next_page_url)
-            except not response.status_code == 200:
-                raise
-            self.html = BeautifulSoup(response.text, 'html.parser')
-            self.current_directory_page = self.current_directory_page + 1
-            self.get_chapters()
 
     def get_author(self):
         if not self.html.find('meta', {'name': 'citation_author'}):
@@ -218,10 +225,10 @@ class CambridgeCoreBook:
 
 
 if __name__ == '__main__':
-    parser = ArgumentParser('Download a book from Cambridge Core.')
+    parser = ArgumentParser('Download a book from Oxford Academic.')
     parser.add_argument('doi', type=str, help='Digital Object Identifier (DOI)', nargs='?')
     args = parser.parse_args()
-    print('Welcome to Cambridge Core Book Downloader!')
+    print('Welcome to Oxford Academic Downloader!')
     if not args.doi:
         args.doi = input('Enter Digital Object Identifier (DOI): ')
-    book = CambridgeCoreBook(args.doi)
+    book = OxfordBook(args.doi)
