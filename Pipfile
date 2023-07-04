@@ -11,6 +11,8 @@ pypub = "*"
 ebooklib = "*"
 pypdf2 = "*"
 roman = "*"
+typing-extensions = "*"
+pysocks = "*"
 
 [dev-packages]
 
