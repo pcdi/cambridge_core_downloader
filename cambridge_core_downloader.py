@@ -242,7 +242,7 @@ class CambridgeCoreBook:
 
     def merge_pdfs(self):
         print(f"Merging PDFs.")
-        merger = pypdf.PdfMerger()
+        writer = pypdf.PdfWriter()
         for chapter in self.chapters:
             pdf = BytesIO(chapter["pdf"])
             bookmark = chapter["title"]
@@ -250,14 +250,14 @@ class CambridgeCoreBook:
             self.make_page_label_dict_entry_from_chapter(chapter)
             # Unfortunately, length in pages is not necessarily the same as length of the PDF file, as Cambridge Core sometimes inserts blank or copyright pages
             self.page_index = self.page_index + chapter["pdf_length"]
-            merger.append(fileobj=pdf, outline_item=bookmark)
+            writer.append(fileobj=pdf, outline_item=bookmark)
         page_numbers = pypdf.generic.DictionaryObject()
         page_numbers.update({pypdf.generic.NameObject("/Nums"): self.nums_array})
         page_labels = pypdf.generic.DictionaryObject()
         page_labels.update({pypdf.generic.NameObject("/PageLabels"): page_numbers})
-        merger.output._root_object.update(page_labels)
-        merger.write(self.output_dir + "/" + self.output_filename + ".pdf")
-        merger.close()
+        writer.get_outline_root().update(page_labels)
+        writer.write(self.output_dir + "/" + self.output_filename + ".pdf")
+        writer.close()
         print("Done.")
 
     def extract_html(self, chapter):
