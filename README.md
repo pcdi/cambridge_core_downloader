@@ -12,20 +12,26 @@
 You will need to have [Git](https://git-scm.com/) and Python 3 with pip/[pipenv](https://pipenv.pypa.io/en/latest/) installed on your computer.
 Then [install the dependencies](https://pipenv.pypa.io/en/latest/basics/#example-pipenv-workflow) thusly:
 
-```{shell}
-# Clone this repository
-$ git clone https://github.com/pcdi/cambridge_core_downloader
-
-# Go into the repository
-$ cd cambridge_core_downloader
-
-# Install dependencies
-$ pipenv install
-
-# Run the app (insert the DOI of the book to download)
-$ pipenv run python ./cambridge_core_downloader.py 10.1017/9781009076012
-
-# If you want an EPUB to be generated if HTML files are available, add "-e" or "--epub" flag:
-$ pipenv run python ./cambridge_core_downloader.py -e 10.1017/9781009076012
-$ pipenv run python ./cambridge_core_downloader.py --epub 10.1017/9781009076012
-```
+1. Clone this repository  
+    ```{shell}
+    git clone https://github.com/pcdi/cambridge_core_downloader
+    ```
+2. Go into the repository
+    ```{shell}
+    cd cambridge_core_downloader
+    ```
+3. Install dependencies
+    ```{shell}
+    pipenv install
+    ```
+4. Run the app (insert the DOI of the book to download)
+    ```{shell}
+    pipenv run python ./cambridge_core_downloader.py 10.1017/9781009076012
+    ```
+5. If you want an EPUB to be generated if HTML files are available, add an `-e` or `--epub` flag:
+    ```{shell}
+    pipenv run python ./cambridge_core_downloader.py -e 10.1017/9781009076012
+    ```
+    ```{shell}
+    pipenv run python ./cambridge_core_downloader.py --epub 10.1017/9781009076012
+    ```
