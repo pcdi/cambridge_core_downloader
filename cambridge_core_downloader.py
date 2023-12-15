@@ -4,7 +4,7 @@ from argparse import ArgumentParser
 from io import BytesIO
 from pathlib import Path
 
-import PyPDF2
+import pypdf
 import requests
 import roman
 from bs4 import BeautifulSoup
@@ -26,7 +26,7 @@ class CambridgeCoreBook:
     output_dir = ""
     chapter_dir = ""
     output_filename = ""
-    nums_array = PyPDF2.generic.ArrayObject()
+    nums_array = pypdf.generic.ArrayObject()
     page_index = 0
     valid_characters = f"-_.() {string.ascii_letters}{string.digits}"
 
@@ -217,13 +217,13 @@ class CambridgeCoreBook:
         # Create pagination only where pagination is available, otherwise create none and fall back on the last section
         if "pagination_type" in chapter.keys():
             # page index of the first page in a labelling range
-            self.nums_array.append(PyPDF2.generic.NumberObject(self.page_index))
+            self.nums_array.append(pypdf.generic.NumberObject(self.page_index))
             # page label dictionary defining the labelling characteristics for the pages in that range
-            number_type = PyPDF2.generic.DictionaryObject()
+            number_type = pypdf.generic.DictionaryObject()
             if chapter["pagination_type"] == "arabic":
                 number_type.update(
                     {
-                        PyPDF2.generic.NameObject("/S"): PyPDF2.generic.NameObject(
+                        pypdf.generic.NameObject("/S"): pypdf.generic.NameObject(
                             f"/D /St {chapter['first_page']}"
                         )
                     }
@@ -231,7 +231,7 @@ class CambridgeCoreBook:
             elif chapter["pagination_type"] == "roman":
                 number_type.update(
                     {
-                        PyPDF2.generic.NameObject("/S"): PyPDF2.generic.NameObject(
+                        pypdf.generic.NameObject("/S"): pypdf.generic.NameObject(
                             f"/r /St {chapter['first_page']}"
                         )
                     }
@@ -241,19 +241,19 @@ class CambridgeCoreBook:
 
     def merge_pdfs(self):
         print(f"Merging PDFs.")
-        merger = PyPDF2.PdfMerger()
+        merger = pypdf.PdfMerger()
         for chapter in self.chapters:
             pdf = BytesIO(chapter["pdf"])
             bookmark = chapter["title"]
-            chapter["pdf_length"] = len(PyPDF2.PdfReader(pdf).pages)
+            chapter["pdf_length"] = len(pypdf.PdfReader(pdf).pages)
             self.make_page_label_dict_entry_from_chapter(chapter)
             # Unfortunately, length in pages is not necessarily the same as length of the PDF file, as Cambridge Core sometimes inserts blank or copyright pages
             self.page_index = self.page_index + chapter["pdf_length"]
             merger.append(fileobj=pdf, outline_item=bookmark)
-        page_numbers = PyPDF2.generic.DictionaryObject()
-        page_numbers.update({PyPDF2.generic.NameObject("/Nums"): self.nums_array})
-        page_labels = PyPDF2.generic.DictionaryObject()
-        page_labels.update({PyPDF2.generic.NameObject("/PageLabels"): page_numbers})
+        page_numbers = pypdf.generic.DictionaryObject()
+        page_numbers.update({pypdf.generic.NameObject("/Nums"): self.nums_array})
+        page_labels = pypdf.generic.DictionaryObject()
+        page_labels.update({pypdf.generic.NameObject("/PageLabels"): page_numbers})
         merger.output._root_object.update(page_labels)
         merger.write(self.output_dir + "/" + self.output_filename + ".pdf")
         merger.close()

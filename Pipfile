@@ -4,12 +4,12 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-pypdf2 = "*"
 requests = "*"
 roman = "*"
 beautifulsoup4 = "*"
 ebooklib = "*"
 tqdm = "*"
+pypdf = "*"
 
 [dev-packages]
 black = "*"
