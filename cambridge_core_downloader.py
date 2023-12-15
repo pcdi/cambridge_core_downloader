@@ -219,6 +219,7 @@ class CambridgeCoreBook:
     def merge_pdfs(self):
         print(f"Merging PDFs.")
         writer = pypdf.PdfWriter()
+        last_parents = {0: None}
         for chapter in self.chapters:
             pdf = pypdf.PdfReader(BytesIO(chapter["pdf"]))
             bookmark = chapter["title"]
@@ -229,9 +230,12 @@ class CambridgeCoreBook:
             page_index_first = self.page_index
             page_index_last = self.page_index + chapter["pdf_length"] - 1
             if not pdf.outline:
-                writer.add_outline_item(
-                    title=chapter["title"], page_number=page_index_first
+                last_parent = writer.add_outline_item(
+                    title=chapter["title"],
+                    page_number=page_index_first,
+                    parent=last_parents[chapter["indentation_level"]],
                 )
+                last_parents[chapter["indentation_level"] + 1] = last_parent
             match chapter["pagination_type"]:
                 case "arabic":
                     pagination_style = pypdf.constants.PageLabelStyle.DECIMAL
