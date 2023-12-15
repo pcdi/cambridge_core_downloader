@@ -210,36 +210,6 @@ class CambridgeCoreBook:
                         output_file.write(chapter[filetype])
                     sequence_number += 1
 
-    def make_page_label_dict_entry_from_chapter(self, chapter):
-        # See <https://stackoverflow.com/q/61794994> and <https://stackoverflow.com/q/61740267>
-        # PDF 32000-1:2008, page 374--375, 12.4.2 Page Labels
-        # <https://opensource.adobe.com/dc-acrobat-sdk-docs/pdflsdk/#pdf-reference>
-        #
-        # Create pagination only where pagination is available, otherwise create none and fall back on the last section
-        if "pagination_type" in chapter.keys():
-            # page index of the first page in a labelling range
-            self.nums_array.append(pypdf.generic.NumberObject(self.page_index))
-            # page label dictionary defining the labelling characteristics for the pages in that range
-            number_type = pypdf.generic.DictionaryObject()
-            if chapter["pagination_type"] == "arabic":
-                number_type.update(
-                    {
-                        pypdf.generic.NameObject("/S"): pypdf.generic.NameObject(
-                            f"/D /St {chapter['first_page']}"
-                        )
-                    }
-                )
-            elif chapter["pagination_type"] == "roman":
-                number_type.update(
-                    {
-                        pypdf.generic.NameObject("/S"): pypdf.generic.NameObject(
-                            f"/r /St {chapter['first_page']}"
-                        )
-                    }
-                )
-            # /Nums Array containing the /PageLabels Number Tree (see 7.9.7)
-            self.nums_array.append(number_type)
-
     def merge_pdfs(self):
         print(f"Merging PDFs.")
         writer = pypdf.PdfWriter()
@@ -247,15 +217,25 @@ class CambridgeCoreBook:
             pdf = BytesIO(chapter["pdf"])
             bookmark = chapter["title"]
             chapter["pdf_length"] = len(pypdf.PdfReader(pdf).pages)
-            self.make_page_label_dict_entry_from_chapter(chapter)
-            # Unfortunately, length in pages is not necessarily the same as length of the PDF file, as Cambridge Core sometimes inserts blank or copyright pages
-            self.page_index = self.page_index + chapter["pdf_length"]
+            # Unfortunately, length in pages is not necessarily the same as length of the PDF file, as Cambridge Core
+            # sometimes inserts blank or copyright pages
             writer.append(fileobj=pdf, outline_item=bookmark)
-        page_numbers = pypdf.generic.DictionaryObject()
-        page_numbers.update({pypdf.generic.NameObject("/Nums"): self.nums_array})
-        page_labels = pypdf.generic.DictionaryObject()
-        page_labels.update({pypdf.generic.NameObject("/PageLabels"): page_numbers})
-        writer.get_outline_root().update(page_labels)
+            page_index_first = self.page_index
+            page_index_last = self.page_index + chapter["pdf_length"] - 1
+            match chapter["pagination_type"]:
+                case "arabic":
+                    pagination_style = "/D"
+                case "roman":
+                    pagination_style = "/r"
+                case _:
+                    raise KeyError
+            writer.set_page_label(
+                page_index_from=page_index_first,
+                page_index_to=page_index_last,
+                style=pagination_style,
+                start=chapter["first_page"],
+            )
+            self.page_index = self.page_index + chapter["pdf_length"]
         writer.write(self.output_dir + "/" + self.output_filename + ".pdf")
         writer.close()
         print("Done.")
