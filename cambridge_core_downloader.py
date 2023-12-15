@@ -28,6 +28,7 @@ class CambridgeCoreBook:
     output_filename = ''
     nums_array = PyPDF2.generic.ArrayObject()
     page_index = 0
+    valid_characters = f'-_.() {string.ascii_letters}{string.digits}'
 
     def __init__(self, doi):
         self.doi = doi
@@ -102,12 +103,14 @@ class CambridgeCoreBook:
 
     def get_author(self):
         if not self.html.find('meta', {'name': 'citation_author'}):
-            self.author = self.html.find('meta', {'name': 'citation_editor'})['content']
+            author_string = self.html.find('meta', {'name': 'citation_editor'})['content']
         else:
-            self.author = self.html.find('meta', {'name': 'citation_author'})['content']
+            author_string = self.html.find('meta', {'name': 'citation_author'})['content']
+        self.author = "".join(letter for letter in author_string if letter in self.valid_characters)
 
     def get_title(self):
-        self.title = self.html.find('meta', {'name': 'citation_title'})['content'].replace(":", "")
+        title_string = self.html.find('meta', {'name': 'citation_title'})['content']
+        self.title = "".join(letter for letter in title_string if letter in self.valid_characters)
 
     def make_output_dir(self):
         try:
@@ -137,9 +140,8 @@ class CambridgeCoreBook:
                     if filetype == 'html':
                         self.extract_html(chapter)
                     # Ensure only valid characters
-                    valid_characters = f'-_.() {string.ascii_letters}{string.digits}'
                     chapter_title_for_filename = chapter["title"].replace(" ", "-")
-                    valid_chapter_filename = "".join(ch for ch in chapter_title_for_filename if ch in valid_characters)
+                    valid_chapter_filename = "".join(ch for ch in chapter_title_for_filename if ch in self.valid_characters)
                     with open(
                             self.chapter_dir +
                             f'{sequence_number:02}_{valid_chapter_filename}_{chapter["pages"]}.{filetype}',
