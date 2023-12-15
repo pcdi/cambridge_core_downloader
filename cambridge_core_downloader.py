@@ -224,9 +224,9 @@ class CambridgeCoreBook:
             page_index_last = self.page_index + chapter["pdf_length"] - 1
             match chapter["pagination_type"]:
                 case "arabic":
-                    pagination_style = "/D"
+                    pagination_style = pypdf.constants.PageLabelStyle.DECIMAL
                 case "roman":
-                    pagination_style = "/r"
+                    pagination_style = pypdf.constants.PageLabelStyle.LOWERCASE_ROMAN
                 case _:
                     raise KeyError
             writer.set_page_label(
