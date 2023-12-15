@@ -4,17 +4,16 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-pikepdf = "*"
-pymupdf = "*"
-pypdf3 = "*"
-pypub = "*"
-ebooklib = "*"
 pypdf2 = "*"
+requests = "*"
 roman = "*"
-chardet = "*"
+beautifulsoup4 = "*"
+ebooklib = "*"
+tqdm = "*"
 
 [dev-packages]
 black = "*"
 
 [requires]
-python_version = "3.10"
+python_version = "3.12"
+python_full_version = "3.12.1"

@@ -67,8 +67,10 @@ class CambridgeCoreBook:
 
     def get_chapters(self):
         all_chapters_html = self.html.find_all("ul", class_="details")
+        re_pdf = re.compile(r"\.pdf")
+        re_core_reader = re.compile("core-reader")
         for single_chapter_html in all_chapters_html:
-            if single_chapter_html.find(href=re.compile("\.pdf")) is None:
+            if single_chapter_html.find(href=re_pdf) is None:
                 continue
             chapter_dict = {
                 "title": (
@@ -77,7 +79,7 @@ class CambridgeCoreBook:
                     .strip()
                     .split("\n")
                 )[0],
-                "pdf_link": single_chapter_html.find(href=re.compile("\.pdf"))["href"],
+                "pdf_link": single_chapter_html.find(href=re_pdf)["href"],
                 "pages": "",
                 "html_link": "",
                 "indentation_level": int(
@@ -120,9 +122,9 @@ class CambridgeCoreBook:
                 chapter_dict["pages_length"] = (
                     chapter_dict["last_page"] - chapter_dict["first_page"] + 1
                 )
-            if single_chapter_html.find(href=re.compile("core-reader")) is not None:
+            if single_chapter_html.find(href=re_core_reader) is not None:
                 chapter_dict["html_link"] = single_chapter_html.find(
-                    href=re.compile("core-reader")
+                    href=re_core_reader
                 )["href"]
             self.chapters.append(chapter_dict)
         if self.current_directory_page < self.total_directory_pages:
