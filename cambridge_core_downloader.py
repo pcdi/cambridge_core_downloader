@@ -30,8 +30,9 @@ class CambridgeCoreBook:
     page_index = 0
     valid_characters = f"-_.() {string.ascii_letters}{string.digits}"
 
-    def __init__(self, doi):
+    def __init__(self, doi, epub_generation):
         self.doi = doi
+        self.epub_generation = epub_generation
         self.get_html()
         self.get_title()
         self.get_author()
@@ -42,7 +43,8 @@ class CambridgeCoreBook:
         self.get_chapters()
         self.download_files()
         self.merge_pdfs()
-        self.make_epub()
+        if self.epub_generation:
+            self.make_epub()
 
     def get_html(self):
         print(f"Getting book information from DOI.")
@@ -176,7 +178,11 @@ class CambridgeCoreBook:
             raise
 
     def download_files(self):
-        for filetype in ["pdf", "html"]:
+        if self.epub_generation:
+            filetypes = ["pdf", "html"]
+        else:
+            filetypes = ["pdf"]
+        for filetype in filetypes:
             if self.chapters[0][f"{filetype}_link"] == "":
                 continue
             else:
@@ -282,8 +288,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "doi", type=str, help="Digital Object Identifier (DOI)", nargs="?"
     )
+    parser.add_argument("-e", "--epub", action="store_true")
     args = parser.parse_args()
     print("Welcome to Cambridge Core Book Downloader!")
     if not args.doi:
         args.doi = input("Enter Digital Object Identifier (DOI): ")
-    book = CambridgeCoreBook(args.doi)
+    book = CambridgeCoreBook(doi=args.doi, epub_generation=args.epub)

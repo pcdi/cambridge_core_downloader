@@ -24,4 +24,8 @@ $ pipenv install
 
 # Run the app (insert the DOI of the book to download)
 $ pipenv run python ./cambridge_core_downloader.py 10.1017/9781009076012
+
+# If you want an EPUB to be generated if HTML files are available, add "-e" or "--epub" flag:
+$ pipenv run python ./cambridge_core_downloader.py -e 10.1017/9781009076012
+$ pipenv run python ./cambridge_core_downloader.py --epub 10.1017/9781009076012
 ```
