@@ -11,8 +11,10 @@ pypub = "*"
 ebooklib = "*"
 pypdf2 = "*"
 roman = "*"
+chardet = "*"
 
 [dev-packages]
+black = "*"
 
 [requires]
 python_version = "3.10"
