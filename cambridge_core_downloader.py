@@ -211,8 +211,9 @@ class CambridgeCoreBook:
                     sequence_number += 1
 
     def make_page_label_dict_entry_from_chapter(self, chapter):
-        # See https://stackoverflow.com/q/61794994 and https://stackoverflow.com/q/61740267
+        # See <https://stackoverflow.com/q/61794994> and <https://stackoverflow.com/q/61740267>
         # PDF 32000-1:2008, page 374--375, 12.4.2 Page Labels
+        # <https://opensource.adobe.com/dc-acrobat-sdk-docs/pdflsdk/#pdf-reference>
         #
         # Create pagination only where pagination is available, otherwise create none and fall back on the last section
         if "pagination_type" in chapter.keys():
