@@ -214,14 +214,18 @@ class CambridgeCoreBook:
         print(f"Merging PDFs.")
         writer = pypdf.PdfWriter()
         for chapter in self.chapters:
-            pdf = BytesIO(chapter["pdf"])
+            pdf = pypdf.PdfReader(BytesIO(chapter["pdf"]))
             bookmark = chapter["title"]
-            chapter["pdf_length"] = len(pypdf.PdfReader(pdf).pages)
+            chapter["pdf_length"] = len(pdf.pages)
             # Unfortunately, length in pages is not necessarily the same as length of the PDF file, as Cambridge Core
             # sometimes inserts blank or copyright pages
-            writer.append(fileobj=pdf, outline_item=bookmark)
+            writer.append(fileobj=pdf)
             page_index_first = self.page_index
             page_index_last = self.page_index + chapter["pdf_length"] - 1
+            if not pdf.outline:
+                writer.add_outline_item(
+                    title=chapter["title"], page_number=page_index_first
+                )
             match chapter["pagination_type"]:
                 case "arabic":
                     pagination_style = pypdf.constants.PageLabelStyle.DECIMAL
