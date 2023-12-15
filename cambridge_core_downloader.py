@@ -26,7 +26,6 @@ class CambridgeCoreBook:
     output_dir = ""
     chapter_dir = ""
     output_filename = ""
-    nums_array = pypdf.generic.ArrayObject()
     page_index = 0
     valid_characters = f"-_.() {string.ascii_letters}{string.digits}"
 
@@ -222,7 +221,6 @@ class CambridgeCoreBook:
         last_parents = {0: None}
         for chapter in self.chapters:
             pdf = pypdf.PdfReader(BytesIO(chapter["pdf"]))
-            bookmark = chapter["title"]
             chapter["pdf_length"] = len(pdf.pages)
             # Unfortunately, length in pages is not necessarily the same as length of the PDF file, as Cambridge Core
             # sometimes inserts blank or copyright pages
@@ -296,4 +294,4 @@ if __name__ == "__main__":
     print("Welcome to Cambridge Core Book Downloader!")
     if not args.doi:
         args.doi = input("Enter Digital Object Identifier (DOI): ")
-    book = CambridgeCoreBook(doi=args.doi, epub_generation=args.epub)
+    cambridge_book = CambridgeCoreBook(doi=args.doi, epub_generation=args.epub)
