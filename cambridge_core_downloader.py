@@ -226,16 +226,15 @@ class CambridgeCoreBook:
             chapter["pdf_length"] = len(pdf.pages)
             # Unfortunately, length in pages is not necessarily the same as length of the PDF file, as Cambridge Core
             # sometimes inserts blank or copyright pages
-            writer.append(fileobj=pdf)
+            writer.append(fileobj=pdf, import_outline=False)
             page_index_first = self.page_index
             page_index_last = self.page_index + chapter["pdf_length"] - 1
-            if not pdf.outline:
-                last_parent = writer.add_outline_item(
-                    title=chapter["title"],
-                    page_number=page_index_first,
-                    parent=last_parents[chapter["indentation_level"]],
-                )
-                last_parents[chapter["indentation_level"] + 1] = last_parent
+            last_parent = writer.add_outline_item(
+                title=chapter["title"],
+                page_number=page_index_first,
+                parent=last_parents[chapter["indentation_level"]],
+            )
+            last_parents[chapter["indentation_level"] + 1] = last_parent
             match chapter["pagination_type"]:
                 case "arabic":
                     pagination_style = pypdf.constants.PageLabelStyle.DECIMAL
