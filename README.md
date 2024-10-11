@@ -20,7 +20,7 @@ Then [install the dependencies](https://pipenv.pypa.io/en/latest/basics/#example
     ```{shell}
     cd cambridge_core_downloader
     ```
-3. Adjust the Python versioin in the `Pipfile`
+3. Adjust the Python version in the `Pipfile` and update the lock file
     ```{shell}
     python ./sync_python_version.py && pipenv lock
     ```
