@@ -3,6 +3,7 @@ import string
 from argparse import ArgumentParser
 from io import BytesIO
 from pathlib import Path
+import sys
 
 import pypdf
 import requests
@@ -174,7 +175,7 @@ class CambridgeCoreBook:
             print(
                 f'The output folder "{self.output_dir}" already exists! Please rename or remove and start again.'
             )
-            raise
+            sys.exit(1)
 
     def download_files(self):
         if self.epub_generation:
@@ -283,8 +284,13 @@ class CambridgeCoreBook:
         epub.write_epub(self.output_dir + "/" + self.output_filename + ".epub", book)
         print("Done.")
 
+def check_python_version():
+    if not sys.version_info >= (3,10):
+        print("At least python version 3.10 is required to run this script. Please consider updating your python environment ({}.{})".format(sys.version_info.major, sys.version_info.minor))
+        sys.exit(1)
 
 if __name__ == "__main__":
+    check_python_version()
     parser = ArgumentParser("Download a book from Cambridge Core.")
     parser.add_argument(
         "doi", type=str, help="Digital Object Identifier (DOI)", nargs="?"

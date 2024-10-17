@@ -20,19 +20,15 @@ Then [install the dependencies](https://pipenv.pypa.io/en/latest/basics/#example
     ```{shell}
     cd cambridge_core_downloader
     ```
-3. Adjust the Python version in the `Pipfile` and update the lock file
-    ```{shell}
-    python ./sync_python_version.py && pipenv lock
-    ```
-4. Install dependencies
+3. Install dependencies
     ```{shell}
     pipenv install
     ```
-5. Run the app (insert the DOI of the book to download)
+4. Run the app (insert the DOI of the book to download)
     ```{shell}
     pipenv run python ./cambridge_core_downloader.py 10.1017/9781009076012
     ```
-6. If you want an EPUB to be generated if HTML files are available, add an `-e` or `--epub` flag:
+5. If you want an EPUB to be generated if HTML files are available, add an `-e` or `--epub` flag:
     ```{shell}
     pipenv run python ./cambridge_core_downloader.py -e 10.1017/9781009076012
     ```
