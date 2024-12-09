@@ -107,8 +107,8 @@ class CambridgeCoreBook:
                     .strip()
                     .split("\n")
                 )[1].replace("pp ", "")
-                chapter_dict["first_page"] = chapter_dict["pages"].split("-")[0]
-                chapter_dict["last_page"] = chapter_dict["pages"].split("-")[1]
+                chapter_dict["first_page"] = chapter_dict["pages"].split("-")[0].strip()
+                chapter_dict["last_page"] = chapter_dict["pages"].split("-")[1].strip()
                 try:
                     chapter_dict["first_page"] = int(chapter_dict["first_page"])
                     chapter_dict["last_page"] = int(chapter_dict["last_page"])
@@ -284,10 +284,16 @@ class CambridgeCoreBook:
         epub.write_epub(self.output_dir + "/" + self.output_filename + ".epub", book)
         print("Done.")
 
+
 def check_python_version():
-    if not sys.version_info >= (3,10):
-        print("At least python version 3.10 is required to run this script. Please consider updating your python environment ({}.{})".format(sys.version_info.major, sys.version_info.minor))
+    if not sys.version_info >= (3, 10):
+        print(
+            "At least python version 3.10 is required to run this script. Please consider updating your python environment ({}.{})".format(
+                sys.version_info.major, sys.version_info.minor
+            )
+        )
         sys.exit(1)
+
 
 if __name__ == "__main__":
     check_python_version()
